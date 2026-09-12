@@ -29,9 +29,13 @@ jobs:
       - name: Any other invocation is forwarded, and a missing Codex is reported
         shell: pwsh
         run: |
-          $output = & .\dist\codex-deepseek.exe --version 2>&1 | Out-String
-          Write-Host $output
-          if ($LASTEXITCODE -ne 127) { throw "expected 127 for a missing Codex, got $LASTEXITCODE" }
+          # No 2>&1 here: the runner sets $ErrorActionPreference = 'Stop', which
+          # turns a redirected native-command stderr write into a terminating
+          # error before the exit code can be inspected.
+          & .\dist\codex-deepseek.exe --version
+          $code = $LASTEXITCODE
+          if ($code -ne 127) { throw "expected 127 for a missing Codex, got $code" }
+          Write-Host "exit code as expected: $code"
 
       - name: Upload the binary
         uses: actions/upload-artifact@v4
