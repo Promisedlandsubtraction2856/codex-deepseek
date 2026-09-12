@@ -36,6 +36,9 @@ jobs:
           $code = $LASTEXITCODE
           if ($code -ne 127) { throw "expected 127 for a missing Codex, got $code" }
           Write-Host "exit code as expected: $code"
+          # The runner appends `exit $LASTEXITCODE`; clear it so this successful
+          # step does not inherit the launcher's expected failure code.
+          exit 0
 
       - name: Upload the binary
         uses: actions/upload-artifact@v4
