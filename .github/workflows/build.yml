@@ -12,36 +12,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build launcher
+      - name: Build the launcher
         shell: pwsh
         run: ./build.ps1
 
-      - name: Intercepted discovery returns the DeepSeek catalog
+      - name: Launcher tests
         shell: pwsh
-        run: |
-          $json = & .\dist\codex-deepseek.exe debug models --bundled
-          if ($LASTEXITCODE -ne 0) { throw "unexpected exit code: $LASTEXITCODE" }
-          $slugs = ($json | ConvertFrom-Json).models.slug
-          if ($slugs -notcontains 'deepseek-flash') { throw "deepseek-flash missing from catalog: $slugs" }
-          if ($slugs -notcontains 'deepseek-v4-pro') { throw "deepseek-v4-pro missing from catalog: $slugs" }
-          Write-Host "catalog ok: $($slugs -join ', ')"
-
-      - name: Any other invocation is forwarded, and a missing Codex is reported
-        shell: pwsh
-        run: |
-          # No 2>&1 here: the runner sets $ErrorActionPreference = 'Stop', which
-          # turns a redirected native-command stderr write into a terminating
-          # error before the exit code can be inspected.
-          & .\dist\codex-deepseek.exe --version
-          $code = $LASTEXITCODE
-          if ($code -ne 127) { throw "expected 127 for a missing Codex, got $code" }
-          Write-Host "exit code as expected: $code"
-          # The runner appends `exit $LASTEXITCODE`; clear it so this successful
-          # step does not inherit the launcher's expected failure code.
-          exit 0
+        run: ./tests/windows-launcher-test.ps1
 
       - name: Upload the binary
         uses: actions/upload-artifact@v4
         with:
           name: codex-deepseek-windows-x64
           path: dist/codex-deepseek.exe
+
+  posix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntax check
+        run: |
+          bash -n src/codex-deepseek.sh
+          bash -n install.sh
+          bash -n tests/posix-launcher-test.sh
+          bash -n tests/posix-install-test.sh
+
+      - name: ShellCheck
+        if: runner.os == 'Linux'
+        run: |
+          shellcheck -S warning \
+            src/codex-deepseek.sh \
+            install.sh \
+            tests/posix-launcher-test.sh \
+            tests/posix-install-test.sh
+
+      - name: Launcher tests
+        run: bash tests/posix-launcher-test.sh
+
+      - name: Installer tests
+        run: bash tests/posix-install-test.sh

@@ -166,12 +166,4 @@ Open a NEW terminal, then:
   codex-deepseek exec "print hello"   # hits your DeepSeek key
 
 Your plain `codex` command is untouched and still uses ChatGPT.
-
-Multica users, additionally:
-
-  pwsh -File .\build.ps1 -InstallMultica
-  multica runtime profile create --display-name "Codex DeepSeek" `
-    --protocol-family codex --command-name codex-deepseek `
-    --description "Local Codex CLI pinned to the DeepSeek gateway"
-  pwsh -File .\multica\Setup-MulticaDeepSeek.ps1 -WorkspaceId <workspace-id>
 '@

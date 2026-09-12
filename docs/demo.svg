@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="330" viewBox="0 0 760 330" role="img" aria-label="Terminal demo: codex-deepseek --version, codex-deepseek debug models --bundled, and codex --version, showing the DeepSeek CLI and the untouched ChatGPT CLI side by side.">
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="286" viewBox="0 0 760 286" role="img" aria-label="Terminal demo: codex-deepseek --version returns the real Codex CLI pinned to its own home, then codex --version still uses the ChatGPT account.">
   <title>codex-deepseek: the DeepSeek CLI and the untouched ChatGPT CLI</title>
   <style>
     .bg      { fill: #0c0c0c; }
@@ -7,7 +7,6 @@
     .l       { font: 13px "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace; dominant-baseline: middle; }
     .prompt  { fill: #4ec9b0; }
     .cmd     { fill: #f0f0f0; }
-    .json    { fill: #9cdcfe; }
     .plain   { fill: #d4d4d4; }
     .comment { fill: #6a9955; }
     .line    { opacity: 1; animation: fade 0.01s linear both; }
@@ -16,51 +15,46 @@
     @keyframes blink { 0%, 49.9% { opacity: 1 } 50%, 100% { opacity: 0 } }
   </style>
 
-  <rect class="bg" x="0" y="0" width="760" height="330" rx="10"/>
+  <rect class="bg" x="0" y="0" width="760" height="286" rx="10"/>
   <rect class="chrome" x="0" y="0" width="760" height="34" rx="10"/>
   <rect class="chrome" x="0" y="24" width="760" height="10"/>
   <circle cx="20" cy="17" r="6" fill="#ff5f57"/>
   <circle cx="40" cy="17" r="6" fill="#febc2e"/>
   <circle cx="60" cy="17" r="6" fill="#28c840"/>
-  <text class="title" x="380" y="21" text-anchor="middle">Windows Terminal &#8212; D:\code\codex-deepseek</text>
+  <text class="title" x="380" y="21" text-anchor="middle">codex-deepseek</text>
 
-  <!-- 1. the DeepSeek CLI -->
+  <!-- 1. the DeepSeek CLI, on its own Codex home -->
   <g class="line" style="animation-delay:0.3s">
-    <text class="l prompt" x="22" y="60">PS&gt;</text>
-    <text class="l cmd" x="52" y="60">codex-deepseek --version</text>
+    <text class="l prompt" x="22" y="64">$</text>
+    <text class="l cmd" x="42" y="64">codex-deepseek --version</text>
+    <text class="l comment" x="270" y="64"># CODEX_HOME is pinned to ~/.codex-deepseek</text>
   </g>
   <g class="line" style="animation-delay:0.9s">
-    <text class="l plain" x="52" y="84">codex-cli 0.154.0</text>
-    <text class="l comment" x="212" y="84"># the real binary, launched with CODEX_HOME=.codex-deepseek</text>
+    <text class="l plain" x="42" y="90">codex-cli 0.154.0</text>
+    <text class="l comment" x="212" y="90"># the real Codex binary, not a re-implementation</text>
   </g>
 
-  <!-- 2. the pinned model catalog -->
-  <g class="line" style="animation-delay:1.5s">
-    <text class="l prompt" x="22" y="132">PS&gt;</text>
-    <text class="l cmd" x="52" y="132">codex-deepseek debug models --bundled</text>
-  </g>
-  <g class="line" style="animation-delay:2.1s">
-    <text class="l json" x="52" y="156">{"models":[{"slug":"deepseek-flash","display_name":"DeepSeek Flash",</text>
+  <!-- 2. the untouched native CLI -->
+  <g class="line" style="animation-delay:1.8s">
+    <text class="l prompt" x="22" y="142">$</text>
+    <text class="l cmd" x="42" y="142">codex --version</text>
+    <text class="l comment" x="180" y="142"># ChatGPT login, same ~/.codex, untouched</text>
   </g>
   <g class="line" style="animation-delay:2.4s">
-    <text class="l json" x="52" y="180">  "default_reasoning_level":"high","supported_reasoning_levels":[...]},</text>
-  </g>
-  <g class="line" style="animation-delay:2.7s">
-    <text class="l json" x="52" y="204">  {"slug":"deepseek-v4-pro","display_name":"DeepSeek V4 Pro", ...}]}</text>
+    <text class="l plain" x="42" y="168">codex-cli 0.154.0</text>
+    <text class="l comment" x="212" y="168"># same binary, same models, no re-login</text>
   </g>
 
-  <!-- 3. the untouched ChatGPT CLI -->
+  <!-- 3. where the two worlds live -->
   <g class="line" style="animation-delay:3.3s">
-    <text class="l prompt" x="22" y="252">PS&gt;</text>
-    <text class="l cmd" x="52" y="252">codex --version</text>
-    <text class="l comment" x="180" y="252"># ChatGPT login, untouched</text>
+    <text class="l comment" x="42" y="220"># ~/.codex              -&gt; ChatGPT Desktop and the plain `codex` command</text>
   </g>
-  <g class="line" style="animation-delay:3.9s">
-    <text class="l plain" x="52" y="276">codex-cli 0.154.0</text>
+  <g class="line" style="animation-delay:3.6s">
+    <text class="l comment" x="42" y="244"># ~/.codex-deepseek     -&gt; codex-deepseek and your DeepSeek key</text>
   </g>
 
-  <g class="line" style="animation-delay:4.4s">
-    <text class="l prompt" x="22" y="306">PS&gt;</text>
-    <rect class="cursor" x="52" y="297" width="8" height="16" fill="#cccccc"/>
+  <g class="line" style="animation-delay:4.2s">
+    <text class="l prompt" x="22" y="272">$</text>
+    <rect class="cursor" x="42" y="263" width="8" height="16" fill="#cccccc"/>
   </g>
 </svg>

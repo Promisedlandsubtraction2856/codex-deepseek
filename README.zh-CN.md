@@ -2,17 +2,21 @@
 
 **让真正的 OpenAI Codex CLI 跑 DeepSeek 模型，同时 ChatGPT 桌面版和原来的 `codex` 命令都照旧使用自己的登录、模型和配置，完全不受影响。**
 
-[English](README.md) · [架构说明](docs/architecture.md) · [完整操作记录](docs/setup-log.zh-CN.md)
+[![build](https://github.com/mlangTse/codex-deepseek/actions/workflows/build.yml/badge.svg)](https://github.com/mlangTse/codex-deepseek/actions/workflows/build.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![platforms: Windows | macOS | Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078d4.svg)](#环境要求)
+
+[English](README.md) · [架构说明](docs/architecture.md)
 
 <p align="center">
-  <img src="docs/demo.svg" alt="终端演示：codex-deepseek 输出 DeepSeek 模型目录，而 codex 仍然使用 ChatGPT 账号" width="760">
+  <img src="docs/demo.svg" alt="终端演示：codex-deepseek --version 返回固定到自己 home 的 Codex CLI，而 codex --version 仍然使用 ChatGPT 账号" width="760">
 </p>
 
 ---
 
 ## 解决什么问题
 
-Codex 桌面版和 `codex` 命令行是**同一个 Codex home 的两个前端**：都读 `%USERPROFILE%\.codex\config.toml`，都在那里找凭据，也都把会话存在那里。所以一旦你把这份共享配置指向第三方 provider：
+Codex 桌面版和 `codex` 命令行是**同一个 Codex home 的两个前端**：都读 `~/.codex/config.toml`，都在那里找凭据，也都把会话存在那里。所以一旦你把这份共享配置指向第三方 provider：
 
 ```toml
 model = "deepseek-flash"
@@ -22,9 +26,9 @@ model_provider = "deepseek"
 两个前端会一起变：
 
 - **ChatGPT 桌面版**：模型选择器里没有 ChatGPT 模型了、要求重新登录，或者登录界面一直转圈加载。
-- **原来的 `codex` CLI**：不再走你的 ChatGPT 账号，同样去打 DeepSeek 端点 —— 连 `~\.codex\sessions` 里已有的会话也一起受影响。
+- **原来的 `codex` CLI**：不再走你的 ChatGPT 账号，同样去打 DeepSeek 端点 —— 连 `~/.codex/sessions` 里已有的会话也一起受影响。
 
-两边都不是「重试一下」能解决的：ChatGPT 订阅不能服务 `deepseek-*` 模型，DeepSeek 的 key 也不能服务 `gpt-*`。于是就有了「同一份文件来回改、改完还要重启/重新登录」的循环 —— 这个仓库终结这个循环：
+两边都不是「重试一下」能解决的：ChatGPT 订阅不能服务 `deepseek-*` 模型，DeepSeek 的 key 也不能服务 `gpt-*`。于是就有了「同一份文件来回改、改完还要重启/重新登录」的循环 —— 这个项目终结这个循环：
 
 ```text
                         你的电脑
@@ -32,50 +36,54 @@ model_provider = "deepseek"
              +--------------+---------------+
              |                              |
      ChatGPT 桌面版                   codex-deepseek
-     + 原来的 `codex` CLI             （本仓库）
+     + 原来的 `codex` CLI             （本项目）
              |                              |
-   %USERPROFILE%\.codex        %USERPROFILE%\.codex-deepseek
+        ~/.codex                    ~/.codex-deepseek
              |                              |
-   ChatGPT 登录 / Pro               你自己的 DeepSeek API Key
+   ChatGPT 登录 / 订阅               你自己的 DeepSeek API Key
              |                              |
    GPT / Codex 模型               deepseek-flash, deepseek-v4-pro
 ```
 
-关键是 `codex-deepseek.exe` 这个启动器：它用显式重写过的 `CODEX_HOME` 去启动**真正的** `codex.exe`，所以无论全局配置怎么写、PATH 怎么排、环境变量怎么传，DeepSeek 的设置都不可能漏进 ChatGPT 桌面版，也不可能漏进原来的 `codex` 命令。
+（Windows 上 `~/.codex` 就是 `%USERPROFILE%\.codex`。）
+
+关键是那个启动器：它用显式重写过的 `CODEX_HOME` 去启动**真正的** `codex`，所以无论全局配置怎么写、PATH 怎么排、环境变量怎么传，DeepSeek 的设置都不可能漏进 ChatGPT 桌面版，也不可能漏进原来的 `codex` 命令。
 
 ### 哪些东西完全没被动过
 
 | 使用者 | Codex home | 凭据 | 模型 |
 |---|---|---|---|
-| ChatGPT 桌面版 | `%USERPROFILE%\.codex` | ChatGPT 登录 | GPT / Codex |
-| `codex`（原来的 CLI） | `%USERPROFILE%\.codex` | ChatGPT 登录 | GPT / Codex |
-| `codex-deepseek` | `%USERPROFILE%\.codex-deepseek` | DeepSeek API Key | `deepseek-flash`、`deepseek-v4-pro` |
+| ChatGPT 桌面版 | `~/.codex` | ChatGPT 登录 | GPT / Codex |
+| `codex`（原来的 CLI） | `~/.codex` | ChatGPT 登录 | GPT / Codex |
+| `codex-deepseek` | `~/.codex-deepseek` | DeepSeek API Key | `deepseek-flash`、`deepseek-v4-pro` |
 
-本仓库从不写 `%USERPROFILE%\.codex`。原来的 CLI 保留自己的配置、自己的凭据、自己的 `~\.codex\sessions` 历史，所以 `codex`、`codex resume`、`codex exec` 的行为和以前完全一样：同一个 ChatGPT 账号、同一批模型，不用重新登录、不用重启。只有 `codex-deepseek` 会读 DeepSeek 的 home，也只有它会用固定目录回答模型发现请求。
+本项目从不写 `~/.codex`。原来的 CLI 保留自己的配置、自己的凭据、自己的 `~/.codex/sessions` 历史，所以 `codex`、`codex resume`、`codex exec` 的行为和以前完全一样：同一个 ChatGPT 账号、同一批模型，不用重新登录、不用重启。
 
-唯一会破坏这个隔离的做法，是把自定义 `model_provider` 写回**全局** `%USERPROFILE%\.codex\config.toml` —— 那正是这个仓库要避开的东西，参见[常见故障对照表](#常见故障对照表)。
+唯一会破坏这个隔离的做法，是把自定义 `model_provider` 写回**全局** `~/.codex/config.toml` —— 那正是这个项目要避开的东西，参见[常见故障对照表](#常见故障对照表)。
 
 ## 仓库内容
 
 | 路径 | 作用 |
 |---|---|
-| `install.ps1` | 一条命令：创建 `~\.codex-deepseek`、写 DeepSeek provider 配置、编译并安装启动器、加进用户 PATH。 |
-| `src\CodexDeepSeek.cs` | 启动器本身。用 Windows 自带的 `csc.exe` 编译，**不需要 .NET SDK、不需要 NuGet、不需要装运行时**。 |
-| `config\models.json` | 固定给 CLI 用的模型目录，让 DeepSeek 模型成为一等公民，同时避免误选 OpenAI 模型。 |
-| `multica\` | 可选：让 [Multica](https://github.com/multica-ai/multica) 的 Codex runtime 也能选到同样的 DeepSeek 模型（见下文）。 |
+| `install.ps1` / `build.ps1` | Windows：用系统自带的 `csc.exe` 编译启动器（**不需要 .NET SDK、不需要 NuGet、不需要装运行时**），建 home、写配置、更新用户 PATH。 |
+| `install.sh` | macOS / Linux：安装 POSIX 启动器、建 home、写配置、往 shell rc 追加一行 PATH。 |
+| `src/CodexDeepSeek.cs` | Windows 启动器：命令行引号处理、继承标准句柄、kill-on-close Job Object。 |
+| `src/codex-deepseek.sh` | macOS / Linux 启动器：约 90 行 POSIX `sh`，零依赖。 |
+| `config/models.json` | 通过 `model_catalog_json` 钉给 CLI 的模型目录。 |
 
 ## 环境要求
 
-- Windows 10/11（启动器要转发标准句柄、使用 Win32 Job Object，细节见[架构说明](docs/architecture.md)）。
-- 已经装好并能正常运行的 Codex CLI：`codex --version`。
-- 一个 DeepSeek API Key，且能访问你在 `config\models.json` 里列出的模型。
-- PowerShell 5.1 以上（`pwsh` 7 也可以）。
+| | |
+|---|---|
+| Windows | Windows 10/11，PowerShell 5.1 以上（用系统自带的 .NET Framework 编译器）。 |
+| macOS / Linux | POSIX `sh` 与 `bash`；安装脚本用到 `install`、`sed`、`mktemp`。 |
+| 通用 | 已装好可用的 Codex CLI（`codex --version`），以及能访问 `config/models.json` 里那些模型的 DeepSeek API Key。 |
 
 ## 快速开始
 
-下面的示例用 `pwsh`；如果没有装 PowerShell 7，把 `pwsh -File` 换成 `powershell -ExecutionPolicy Bypass -File` 即可。
+### Windows
 
-**方案 A —— 本地编译（两秒钟，不需要 SDK）：**
+**方案 A —— 本地编译**（两秒钟，不需要 SDK）：
 
 ```powershell
 git clone https://github.com/mlangTse/codex-deepseek.git
@@ -84,50 +92,70 @@ cd codex-deepseek
 # 编译启动器 + 创建 ~\.codex-deepseek + 写入 PATH
 pwsh -File .\install.ps1
 
-# 安装脚本会问你的 DeepSeek API Key（也可以用 -ApiKey 参数或 $env:DEEPSEEK_API_KEY）
+# 安装脚本会问你的 DeepSeek API Key（也可以用 -ApiKey 或 $env:DEEPSEEK_API_KEY）
 ```
 
-**方案 B —— 不编译：** 从 [latest release](https://github.com/mlangTse/codex-deepseek/releases/latest) 下载 `codex-deepseek.exe`，放进 `%USERPROFILE%\.codex-deepseek\bin` 并把这个目录加入 `PATH`（对应下面手动安装的第 2～4 步）。Release 里同时提供 `SHA256SUMS.txt`。
+没有 PowerShell 7 就用 `powershell -ExecutionPolicy Bypass -File .\install.ps1`。
 
-**新开**一个终端，然后：
+**方案 B —— 不编译**：从 [latest release](https://github.com/mlangTse/codex-deepseek/releases/latest) 下载 `codex-deepseek.exe`（Windows x64，附 `SHA256SUMS.txt`），放进 `%USERPROFILE%\.codex-deepseek\bin`，然后照下面手动安装的第 2～4 步做。
 
-```powershell
-codex-deepseek --version      # -> codex-cli 0.154.0（真 CLI，不是重写的实现）
+### macOS / Linux
+
+```sh
+git clone https://github.com/mlangTse/codex-deepseek.git
+cd codex-deepseek
+
+# 安装启动器、创建 ~/.codex-deepseek、写配置，
+# 并往 ~/.zshrc 或 ~/.bashrc 追加一行 PATH
+./install.sh
+
+# 安装脚本会问你的 DeepSeek API Key
+# （也可用 DEEPSEEK_API_KEY=... ./install.sh 或 ./install.sh --api-key ...）
+```
+
+常用参数：`--home DIR`、`--model SLUG`、`--reasoning-effort LEVEL`、`--base-url URL`、`--no-path`、`--force`，完整列表见 `./install.sh --help`。
+
+不需要下载二进制：POSIX 启动器本身就是可直接执行的 shell 脚本。
+
+### 之后（三个平台一样）
+
+```sh
+codex-deepseek --version      # -> codex-cli <版本>（真 CLI，不是重写的实现）
 codex-deepseek exec "打印当前日期"
 ```
 
-原来的 `codex` 命令完全不受影响：同一个 ChatGPT 账号、同一批模型、同一份 `~\.codex\sessions` 历史，不用重新登录也不用重启。
+原来的 `codex` 命令完全不受影响：同一个 ChatGPT 账号、同一批模型、同一份会话历史，不用重新登录也不用重启。
 
 ### 手动安装（想逐步确认时）
 
-```powershell
-# 1. 编译
-pwsh -File .\build.ps1                       # 产出 dist\codex-deepseek.exe
+```sh
+# 1. 拿到启动器
+git clone https://github.com/mlangTse/codex-deepseek.git && cd codex-deepseek
+#    Windows：pwsh -File .\build.ps1  -> dist\codex-deepseek.exe
+#    macOS/Linux：无需编译，直接用 src/codex-deepseek.sh
 
 # 2. 建立独立的 Codex home
-$deepseekHome = "$env:USERPROFILE\.codex-deepseek"
-New-Item -ItemType Directory -Force -Path "$deepseekHome\bin" | Out-Null
-Copy-Item .\config\models.json         "$deepseekHome\models.json"
-Copy-Item .\config\config.toml.example "$deepseekHome\config.toml"
-Copy-Item .\dist\codex-deepseek.exe    "$deepseekHome\bin\"
+mkdir -p ~/.codex-deepseek/bin
+cp config/models.json          ~/.codex-deepseek/models.json
+cp config/config.toml.example  ~/.codex-deepseek/config.toml
+cp src/codex-deepseek.sh       ~/.codex-deepseek/bin/codex-deepseek
+chmod 755 ~/.codex-deepseek/bin/codex-deepseek
 
-# 3. 编辑 $deepseekHome\config.toml，把占位符换成你的 Key
+# 3. 编辑 ~/.codex-deepseek/config.toml，把占位符换成你的值
+#    （model、目录路径、base URL、bearer token）
 
-# 4. 把启动器目录加入 PATH（只需一次）
-[Environment]::SetEnvironmentVariable(
-  'Path',
-  [Environment]::GetEnvironmentVariable('Path','User') + ";$deepseekHome\bin",
-  'User')
+# 4. 把启动器加入 PATH（只需一次）
+echo 'export PATH="$HOME/.codex-deepseek/bin:$PATH"' >> ~/.zshrc   # 或 ~/.bashrc
 ```
 
 ## 配置说明
 
-`%USERPROFILE%\.codex-deepseek\config.toml` 就是全部，它永远不会碰到桌面版：
+`~/.codex-deepseek/config.toml` 就是全部，它永远不会碰到桌面版：
 
 ```toml
 model = "deepseek-flash"
 model_provider = "deepseek"
-model_catalog_json = "C:/Users/<你的用户名>/.codex-deepseek/models.json"
+model_catalog_json = "/Users/<你>/.codex-deepseek/models.json"
 model_reasoning_effort = "high"
 web_search = "disabled"
 preferred_auth_method = "apikey"
@@ -146,93 +174,57 @@ experimental_bearer_token = "<你的 DeepSeek API Key>"
 - **`forced_login_method = "api"` + `preferred_auth_method = "apikey"`** 阻止 CLI 去弹 ChatGPT 浏览器登录；这个 home 故意没有 `auth.json`。
 - **`web_search = "disabled"`**，因为第三方网关不提供托管的搜索工具。
 - 不要写 `service_tier`，第三方网关会直接返回 `400`。
-- 这个文件里是明文 bearer token，别提交到仓库。`.gitignore` 已经排除 `config.toml`，`install.ps1` 也不会把 Key 回显出来。
+- Windows 上路径用正斜杠或转义反斜杠；macOS/Linux 用普通绝对路径。
+- 这个文件里是明文 bearer token，别提交到仓库。两个安装脚本都不会把 Key 回显出来，`.gitignore` 也已经排除 `config.toml`（macOS/Linux 下安装脚本会把权限设成 `600`）。
 
 ### 模型列表从哪来
 
-CLI 能用哪些模型由 `config\models.json` 决定，改完重启 CLI 即生效，不需要重新编译：
+模型选择完全由 `model_catalog_json` → `config/models.json` 决定，改完重启 CLI 即生效，不需要重新编译：
 
-```powershell
-codex-deepseek debug models --bundled   # 当前 home 暴露的模型
+```sh
+codex-deepseek exec "你现在是哪个模型？"
+```
+
+要针对新的 CLI 版本重新生成目录，就从内置目录出发并保留那些长 instructions 字段：
+
+```sh
+codex debug models --bundled > "$TMPDIR/bundled.json"
+# 保留一个条目做模板，改 slug / display_name / supported_reasoning_levels
 ```
 
 ## 日常使用
 
-```powershell
+```sh
 codex-deepseek                      # 交互式 TUI，跑 DeepSeek
 codex-deepseek exec "fix the tests"
-codex-deepseek resume               # 会话存在 ~\.codex-deepseek\sessions
+codex-deepseek resume               # 会话存在 ~/.codex-deepseek/sessions
 codex-deepseek --version
 
 codex                               # 保持原样：ChatGPT 账号
 ```
 
-`install.ps1` 会在启动器旁边放两个短别名：Git Bash 用 `cx`，cmd 用 `cx.cmd`。
+两个安装脚本都会在启动器旁边放一个短别名：macOS/Linux（以及 Git Bash）用 `cx`，Windows 的 cmd 用 `cx.cmd`。
 
-```bash
+```sh
 cx exec "解释一下这个仓库"
 ```
-
-## Multica 接入
-
-如果通过 [Multica](https://github.com/multica-ai/multica) daemon 跑 agent，会多一个坑：**Multica 靠 `codex debug models --bundled` 枚举模型**，而它永远只返回二进制里内置的 OpenAI 目录。于是 DeepSeek 模型不会出现在选择器里，直接把 agent 配成 `model = deepseek-flash` 又会在普通 Codex runtime 上失败：
-
-```text
-{"detail":"The 'deepseek-flash' model is not supported when using Codex with a ChatGPT account."}
-```
-
-`codex-deepseek.exe` 只对这一条调用返回 DeepSeek 目录，其余调用（`--version`、`app-server`、`exec`……）原样转发给真 binary 并继承 stdin/stdout/stderr，Multica 的 JSON-RPC 通道不受影响。
-
-```powershell
-pwsh -File .\build.ps1                        # 存在 ~\.multica\bin 时会一并复制过去
-
-multica runtime profile create `
-  --display-name "Codex DeepSeek" `
-  --protocol-family codex `
-  --command-name codex-deepseek `
-  --description "Local Codex CLI pinned to the DeepSeek gateway"
-
-multica daemon restart
-multica runtime list                          # 应出现 "Codex DeepSeek (<机器名>)" online
-```
-
-然后让脚本（幂等、支持 `-DryRun`）把 agent 也绑过去：
-
-```powershell
-pwsh -File .\multica\Setup-MulticaDeepSeek.ps1 -WorkspaceId <workspace-id> -DryRun
-pwsh -File .\multica\Setup-MulticaDeepSeek.ps1 -WorkspaceId <workspace-id>
-```
-
-三个容易耗掉一晚上的事实：
-
-1. **`multica runtime profile set-path` 在 Windows 上用不了。** daemon 的 `profilePathExecutable` 判断依赖 Unix 可执行位（`mode & 0o111`），NTFS 文件永远没有，所以覆盖总是被拒绝、回退到 PATH。真正有效的是把 `codex-deepseek.exe` 放进已在 PATH 上的 `~\.multica\bin`。
-2. **Runtime profile 是按 workspace 隔离的。** 在 A 工作区创建的 profile 在 B 工作区不存在，那边的 agent 会继续报错，所以需要 `Setup-MulticaDeepSeek.ps1 -WorkspaceId <id>`。
-3. **创建工作区 profile 需要 admin/owner。** 普通 member 会拿到 `403 insufficient permissions`，脚本会打印需要交给 owner 执行的完整命令；重新绑定自己拥有的 agent 用 member 权限即可。
-
-agent 不会自己跟着 profile 走，必须显式改绑：
-
-```powershell
-multica --workspace-id <workspace-id> agent update <agent-id> `
-  --runtime-id <deepseek-runtime-id> --model deepseek-flash --thinking-level high
-```
-
-用量计费：Multica 内置价格表只有 `deepseek-v4-flash / v4-pro / chat / reasoner`，没有 `deepseek-flash`，所以 token 数会显示、金额为空，直到你为 `codex/deepseek-flash` 加一条自定义价格。
 
 ## 常见故障对照表
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
-| 桌面版要求重新登录，或登录界面一直转圈 | 全局 `~\.codex\config.toml` 里写了自定义 `model_provider` | 从 `~\.codex\config.toml` 删掉 `model` / `model_provider` / `model_catalog_json` / `[model_providers.*]`，只保留在 `~\.codex-deepseek\config.toml` |
+| 桌面版要求重新登录，或登录界面一直转圈 | 全局 `~/.codex/config.toml` 里写了自定义 `model_provider` | 从 `~/.codex/config.toml` 删掉 `model` / `model_provider` / `model_catalog_json` / `[model_providers.*]`，只保留在 `~/.codex-deepseek/config.toml` |
 | 网关返回 `400`，body 为空 | 请求里带了 `service_tier = "default"` | DeepSeek home 里不要设 `service_tier` |
 | `model_reasoning_effort = "xhigh"` 被拒 | 目录里没有该档位 | 用 `high`，或在 `models.json` 里补上档位 |
-| 报 `... not supported when using Codex with a ChatGPT account` | 这一轮跑的是 ChatGPT home 下的真 `codex.exe` | DeepSeek 配置漏进了 `~\.codex`，或 Multica runtime 没绑到 wrapper |
-| `codex-deepseek: cannot find the real codex executable` | 找不到 Codex 安装 | 设 `CODEX_DEEPSEEK_TARGET` 为 `codex.exe` 的完整路径 |
-| `codex-deepseek: missing DeepSeek config at ...` | 独立 home 里没有 `config.toml` | 跑 `install.ps1` 或手工创建 |
-| Multica 取消任务后 `codex.exe` 残留 | — | 不会发生：子进程在 kill-on-close 的 Job Object 里，杀掉 wrapper 即终止 Codex |
+| 报 `... not supported when using Codex with a ChatGPT account` | 这一轮跑的是 ChatGPT home 下的真 `codex` | 你执行的是 `codex` 而不是 `codex-deepseek`，或者 DeepSeek 配置漏进了 `~/.codex` |
+| `codex-deepseek: cannot find the real codex executable` | 找不到 Codex 安装 | 把 `CODEX_DEEPSEEK_TARGET` 设为 Codex 可执行文件的完整路径 |
+| `codex-deepseek: missing DeepSeek config at ...` | 独立 home 里没有 `config.toml` | 跑安装脚本，或手工创建 |
+| `codex-deepseek debug models --bundled` 显示的是 OpenAI 模型 | v0.2.0 起启动器原样转发，不再自己回答这条命令 | 属于预期行为；选模型靠的是 `model_catalog_json`，不是这条命令 |
+| 取消任务后 `codex` 残留（Windows） | — | 不会发生：子进程在 kill-on-close 的 Job Object 里 |
 
-## 这套东西是怎么来的
+### 关于过去的一个说明
 
-完整操作记录（每条命令、每个弯路、按时间顺序）在 [docs/setup-log.zh-CN.md](docs/setup-log.zh-CN.md)；转发机制、命令行引号处理等设计细节在 [docs/architecture.md](docs/architecture.md)。
+早期版本的启动器还会拦截 `codex debug models --bundled`，向第三方工具广告一份 DeepSeek 专用目录。该功能已在 v0.2.0 移除：现在启动器原样转发所有参数，只做「钉住 `CODEX_HOME`」这一件事，日常 CLI 使用行为不变。
 
 ## 许可
 

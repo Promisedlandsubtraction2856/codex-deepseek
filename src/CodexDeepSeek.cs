@@ -1,17 +1,18 @@
-// CodexDeepSeek: a pass-through launcher for the real Codex CLI that answers
-// Multica's model-discovery call with a DeepSeek-only catalog.
+// CodexDeepSeek: launch the real Codex CLI against an isolated DeepSeek home.
 //
-// Multica enumerates a Codex runtime's models with `codex debug models
-// --bundled`, which only ever returns the OpenAI catalog bundled into the
-// binary. This wrapper intercepts exactly that invocation and prints a catalog
-// containing the models the local DeepSeek gateway actually serves, so the
-// Multica model picker offers them as first-class choices.
+// The launcher starts the real codex.exe with CODEX_HOME rewritten to
+// %USERPROFILE%\.codex-deepseek (or CODEX_DEEPSEEK_HOME), so the DeepSeek
+// provider config, the pinned model catalog, the credentials and the session
+// store all live apart from %USERPROFILE%\.codex - which stays dedicated to
+// ChatGPT Desktop and the plain `codex` command.
 //
-// Every other invocation (--version, app-server, exec, ...) is forwarded to the
-// real Codex binary with the parent's standard handles, so the daemon's
-// JSON-RPC transport over stdin/stdout keeps working. The child is placed in a
-// kill-on-close Job Object so killing this wrapper cannot leave an orphaned
-// Codex process behind on Windows.
+// Arguments are forwarded with the parent's standard handles, so pipes and
+// interactive TUIs behave exactly as they would with codex itself. The child is
+// placed in a kill-on-close Job Object so killing this wrapper cannot leave an
+// orphaned Codex process behind on Windows.
+
+// The POSIX counterpart of this file is src/codex-deepseek.sh. Keep the two in
+// step: same environment variables, same resolution order, same exit codes.
 
 using System;
 using System.Collections;
@@ -36,24 +37,6 @@ internal static class CodexDeepSeek
     private const string TargetEnvVar = "CODEX_DEEPSEEK_TARGET";
     private const string HomeEnvVar = "CODEX_DEEPSEEK_HOME";
     private const string DeepSeekHomeDirName = ".codex-deepseek";
-
-    // The catalog Multica parses. Keep the shape identical to `codex debug models`
-    // output: models[].slug / display_name / visibility plus reasoning metadata.
-    // Only the DeepSeek gateway models are listed, so the picker cannot offer an
-    // OpenAI model that this provider would reject.
-    private const string CatalogJson =
-        "{\"models\":[" +
-        "{\"slug\":\"deepseek-flash\",\"display_name\":\"DeepSeek Flash\",\"visibility\":\"list\"," +
-        "\"default_reasoning_level\":\"high\",\"supported_reasoning_levels\":[" +
-        "{\"effort\":\"low\",\"description\":\"Fast responses with lighter reasoning\"}," +
-        "{\"effort\":\"medium\",\"description\":\"Balances speed and reasoning depth\"}," +
-        "{\"effort\":\"high\",\"description\":\"Greater reasoning depth for complex problems\"}]}," +
-        "{\"slug\":\"deepseek-v4-pro\",\"display_name\":\"DeepSeek V4 Pro\",\"visibility\":\"list\"," +
-        "\"default_reasoning_level\":\"high\",\"supported_reasoning_levels\":[" +
-        "{\"effort\":\"low\",\"description\":\"Fast responses with lighter reasoning\"}," +
-        "{\"effort\":\"medium\",\"description\":\"Balances speed and reasoning depth\"}," +
-        "{\"effort\":\"high\",\"description\":\"Greater reasoning depth for complex problems\"}]}" +
-        "]}";
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct STARTUPINFO
@@ -163,15 +146,6 @@ internal static class CodexDeepSeek
 
     private static int Main(string[] args)
     {
-        if (IsModelDiscovery(args))
-        {
-            byte[] payload = new UTF8Encoding(false).GetBytes(CatalogJson);
-            Stream stdout = Console.OpenStandardOutput();
-            stdout.Write(payload, 0, payload.Length);
-            stdout.Flush();
-            return 0;
-        }
-
         string target = ResolveCodexPath();
         if (target == null)
         {
@@ -182,19 +156,6 @@ internal static class CodexDeepSeek
         }
 
         return Forward(target, args);
-    }
-
-    private static bool IsModelDiscovery(string[] args)
-    {
-        for (int i = 0; i + 1 < args.Length; i++)
-        {
-            if (string.Equals(args[i], "debug", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(args[i + 1], "models", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static string ResolveCodexPath()

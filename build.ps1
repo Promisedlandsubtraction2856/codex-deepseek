@@ -10,20 +10,16 @@
     supported Windows version already has.
 
     By default the binary is written to .\dist. Use -Install to copy it into
-    %USERPROFILE%\.codex-deepseek\bin (the location install.ps1 puts on PATH),
-    and/or -InstallMultica to copy it into %USERPROFILE%\.multica\bin, which is
-    the directory that actually works for a Multica runtime profile on Windows.
+    %USERPROFILE%\.codex-deepseek\bin, the location install.ps1 puts on PATH.
 
 .EXAMPLE
     pwsh -File .\build.ps1
     pwsh -File .\build.ps1 -Install
-    pwsh -File .\build.ps1 -Install -InstallMultica
 #>
 [CmdletBinding()]
 param(
     [string]$OutputDirectory,
-    [switch]$Install,
-    [switch]$InstallMultica
+    [switch]$Install
 )
 
 $ErrorActionPreference = 'Stop'
@@ -66,18 +62,4 @@ if ($Install) {
     New-Item -ItemType Directory -Force -Path $target | Out-Null
     Copy-Item -LiteralPath $output -Destination $target -Force
     Write-Host "copied  $target\codex-deepseek.exe" -ForegroundColor Green
-}
-
-if ($InstallMultica) {
-    # Multica's `runtime profile set-path` is unusable on Windows (the daemon
-    # gates it behind a Unix executable bit), so the profile's command_name is
-    # resolved through PATH. ~\.multica\bin is already on it.
-    $multicaBin = Join-Path $env:USERPROFILE '.multica\bin'
-    if (Test-Path -LiteralPath $multicaBin) {
-        Copy-Item -LiteralPath $output -Destination $multicaBin -Force
-        Write-Host "copied  $multicaBin\codex-deepseek.exe" -ForegroundColor Green
-    }
-    else {
-        Write-Warning "skipped Multica install: $multicaBin does not exist"
-    }
 }
