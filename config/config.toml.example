@@ -1,0 +1,28 @@
+# Codex config for the *DeepSeek* home (%USERPROFILE%\.codex-deepseek).
+#
+# This file is read only by codex-deepseek.exe, which starts the real codex.exe
+# with CODEX_HOME rewritten to this directory. Your ChatGPT Desktop keeps using
+# %USERPROFILE%\.codex and never sees any of it.
+#
+# install.ps1 fills in the placeholders below; if you copy this file by hand,
+# fill in the model, catalog path, base URL and bearer token yourself.
+
+model = "__MODEL__"
+model_provider = "deepseek"
+model_catalog_json = "__MODELS_JSON__"
+model_reasoning_effort = "__REASONING_EFFORT__"
+
+# The gateway does not serve OpenAI's hosted search tool.
+web_search = "disabled"
+
+# Never try to open a ChatGPT browser login: this home has no auth.json.
+preferred_auth_method = "apikey"
+forced_login_method = "api"
+
+[model_providers.deepseek]
+name = "deepseek"
+base_url = "__BASE_URL__"
+wire_api = "responses"
+
+# Keep this file out of version control; it holds a bearer token.
+experimental_bearer_token = "__API_KEY__"

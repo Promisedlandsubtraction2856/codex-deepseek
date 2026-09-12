@@ -1,0 +1,7 @@
+# Build output
+codex-deepseek.exe
+
+# Local Codex state / secrets that must never be committed
+config.toml
+auth.json
+*.log

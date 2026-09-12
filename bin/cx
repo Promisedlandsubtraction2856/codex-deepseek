@@ -1,0 +1,3 @@
+#!/bin/sh
+# Short alias, installed next to codex-deepseek.exe.
+exec "$(dirname "$0")/codex-deepseek.exe" "$@"

@@ -1,0 +1,12 @@
+# POSIX shell shims must keep LF, otherwise Git Bash chokes on the CRLF.
+bin/cx text eol=lf
+*.sh   text eol=lf
+
+# Windows scripts and manifests keep their native line endings.
+*.ps1  text eol=crlf
+*.psm1 text eol=crlf
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+# Everything else is normalised in the repository.
+* text=auto

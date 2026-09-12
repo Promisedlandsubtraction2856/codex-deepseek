@@ -1,0 +1,40 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build launcher
+        shell: pwsh
+        run: ./build.ps1
+
+      - name: Intercepted discovery returns the DeepSeek catalog
+        shell: pwsh
+        run: |
+          $json = & .\dist\codex-deepseek.exe debug models --bundled
+          if ($LASTEXITCODE -ne 0) { throw "unexpected exit code: $LASTEXITCODE" }
+          $slugs = ($json | ConvertFrom-Json).models.slug
+          if ($slugs -notcontains 'deepseek-flash') { throw "deepseek-flash missing from catalog: $slugs" }
+          if ($slugs -notcontains 'deepseek-v4-pro') { throw "deepseek-v4-pro missing from catalog: $slugs" }
+          Write-Host "catalog ok: $($slugs -join ', ')"
+
+      - name: Any other invocation is forwarded, and a missing Codex is reported
+        shell: pwsh
+        run: |
+          $output = & .\dist\codex-deepseek.exe --version 2>&1 | Out-String
+          Write-Host $output
+          if ($LASTEXITCODE -ne 127) { throw "expected 127 for a missing Codex, got $LASTEXITCODE" }
+
+      - name: Upload the binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-deepseek-windows-x64
+          path: dist/codex-deepseek.exe
