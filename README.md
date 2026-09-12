@@ -8,6 +8,10 @@
 
 [中文说明](README.zh-CN.md) · [Architecture](docs/architecture.md) · [Setup log (中文)](docs/setup-log.zh-CN.md)
 
+<p align="center">
+  <img src="docs/demo.svg" alt="Terminal: codex-deepseek --version and codex-deepseek debug models --bundled return the DeepSeek catalog, then codex --version still uses the ChatGPT account" width="760">
+</p>
+
 ---
 
 ## The problem this solves
@@ -62,6 +66,8 @@ The launcher `codex-deepseek.exe` is what makes the left column impossible to di
 
 The examples use `pwsh`; if PowerShell 7 is not installed, substitute `powershell -ExecutionPolicy Bypass -File` for `pwsh -File` anywhere below.
 
+**Option A — build it locally (two seconds, no SDK needed):**
+
 ```powershell
 git clone https://github.com/mlangTse/codex-deepseek.git
 cd codex-deepseek
@@ -71,6 +77,8 @@ pwsh -File .\install.ps1
 
 # the installer asks for your DeepSeek API key (or pass -ApiKey / set $env:DEEPSEEK_API_KEY)
 ```
+
+**Option B — skip the build:** download `codex-deepseek.exe` from the [latest release](https://github.com/mlangTse/codex-deepseek/releases/latest), copy it into `%USERPROFILE%\.codex-deepseek\bin`, and add that directory to `PATH` (step 2-4 of the manual setup below). The release also carries a `SHA256SUMS.txt`.
 
 Open a **new** terminal, then:
 

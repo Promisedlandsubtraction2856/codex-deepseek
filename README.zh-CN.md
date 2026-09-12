@@ -4,6 +4,10 @@
 
 [English](README.md) · [架构说明](docs/architecture.md) · [完整操作记录](docs/setup-log.zh-CN.md)
 
+<p align="center">
+  <img src="docs/demo.svg" alt="终端演示：codex-deepseek 输出 DeepSeek 模型目录，而 codex 仍然使用 ChatGPT 账号" width="760">
+</p>
+
 ---
 
 ## 解决什么问题
@@ -56,6 +60,8 @@ model_provider = "deepseek"
 
 下面的示例用 `pwsh`；如果没有装 PowerShell 7，把 `pwsh -File` 换成 `powershell -ExecutionPolicy Bypass -File` 即可。
 
+**方案 A —— 本地编译（两秒钟，不需要 SDK）：**
+
 ```powershell
 git clone https://github.com/mlangTse/codex-deepseek.git
 cd codex-deepseek
@@ -65,6 +71,8 @@ pwsh -File .\install.ps1
 
 # 安装脚本会问你的 DeepSeek API Key（也可以用 -ApiKey 参数或 $env:DEEPSEEK_API_KEY）
 ```
+
+**方案 B —— 不编译：** 从 [latest release](https://github.com/mlangTse/codex-deepseek/releases/latest) 下载 `codex-deepseek.exe`，放进 `%USERPROFILE%\.codex-deepseek\bin` 并把这个目录加入 `PATH`（对应下面手动安装的第 2～4 步）。Release 里同时提供 `SHA256SUMS.txt`。
 
 **新开**一个终端，然后：
 

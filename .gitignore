@@ -1,5 +1,7 @@
 # Build output
+dist/
 codex-deepseek.exe
+SHA256SUMS.txt
 
 # Local Codex state / secrets that must never be committed
 config.toml
