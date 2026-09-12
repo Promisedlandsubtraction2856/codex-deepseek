@@ -161,6 +161,9 @@ finally {
 Write-Host ''
 if ($failures -eq 0) {
     Write-Host 'all windows launcher tests passed' -ForegroundColor Green
+    # The runner appends `exit $LASTEXITCODE`, and the last native command we ran
+    # was expected to fail (the 127 assertions).
+    exit 0
 }
 else {
     Write-Host "$failures test(s) failed" -ForegroundColor Red
