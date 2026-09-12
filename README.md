@@ -250,4 +250,4 @@ The full operation log — every command, every dead end, in the order it happen
 
 ## License
 
-[MIT](LICENSE). Not affiliated with OpenAI, DeepSeek or Multica; Codex is a trademark of OpenAI.
+[MIT](LICENSE). Not affiliated with OpenAI, DeepSeek; Codex is a trademark of OpenAI.
