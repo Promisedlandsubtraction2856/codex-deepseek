@@ -228,7 +228,7 @@ bash tools/sync-from-native.sh --also ~/.codex/automations/chronicle-workflow-sk
 
 What "merge" means here:
 
-- **`AGENTS.md`** — the native file is appended under a marker that records a hash of its content, so the target's own rules stay at the top and a second run is a no-op. An empty native file means nothing happens.
+- **`AGENTS.md`** — the source is imported under a marker that records a hash of its content, so the target's own rules stay at the top and a second run is a no-op. If you edit the source and run it again, that block is **refreshed in place** rather than stacked, and anything of your own above the marker is kept. An empty source means nothing happens.
 - **`skills/`** — merged file by file. Same-named files are overwritten; a skill that only exists in the DeepSeek home is left alone. Empty folders are skipped (`-IncludeEmpty` / `--include-empty` copies them anyway), and `skills/.system` is skipped because each home gets its own copy from the Codex binary.
 - **`-Also` / `--also`** — for skills kept outside `skills/`, such as automations. Every direct subdirectory that contains a `SKILL.md` is merged.
 

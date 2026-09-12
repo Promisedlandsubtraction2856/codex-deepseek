@@ -8,7 +8,9 @@
 
       * AGENTS.md      - the source is appended under a marker recording a hash
                          of its content, so a second run is a no-op. The target's
-                         own rules stay at the top of the file.
+                         own rules stay at the top of the file. If an earlier
+                         run imported an older revision, that block is replaced
+                         rather than stacked.
       * skills\*       - copied file by file, overwriting same-named files,
                          leaving any skill that only exists in the target alone.
       * skills\.system - skipped: each home gets its own copy from the Codex
@@ -83,23 +85,36 @@ else {
     $marker = "<!-- merged from $From\AGENTS.md (sha256:$digest) -->"
     $targetText = if (Test-Path -LiteralPath $targetAgents) { Get-Content -LiteralPath $targetAgents -Raw } else { '' }
 
+    $targetLines = if (Test-Path -LiteralPath $targetAgents) { @(Get-Content -LiteralPath $targetAgents) } else { @() }
+    $importedIndex = -1
+    for ($i = 0; $i -lt $targetLines.Count; $i++) {
+        if ($targetLines[$i] -match '^<!-- merged from .*AGENTS\.md \(sha256:') { $importedIndex = $i; break }
+    }
+
     if ($targetText -and $targetText.Contains($marker)) {
         Write-Host "AGENTS.md: already merged (sha256:$($digest.Substring(0, 12))), nothing to do"
     }
     elseif ($DryRun) {
-        Write-Host "AGENTS.md: would append $sourceAgents"
+        $action = if ($importedIndex -ge 0) { 'refresh' } else { 'append' }
+        Write-Host "AGENTS.md: would $action with the content of $sourceAgents"
         $agentsChanges++
     }
     else {
+        $action = if ($importedIndex -ge 0) { 'refresh' } else { 'append' }
         if (Test-Path -LiteralPath $targetAgents) {
             $backup = "$targetAgents.bak-" + (Get-Date -Format 'yyyyMMdd-HHmmss')
             Copy-Item -LiteralPath $targetAgents -Destination $backup -Force
             Write-Host "AGENTS.md: backup $backup"
         }
-        $sourceText = Get-Content -LiteralPath $sourceAgents -Raw
-        $merged = "$targetText`r`n$marker`r`n$sourceText`r`n"
+
+        # keep whatever comes before the imported block, drop the old block
+        $ownLines = if ($importedIndex -gt 0) { $targetLines[0..($importedIndex - 1)] }
+                    elseif ($importedIndex -lt 0) { $targetLines }
+                    else { @() }
+        $sourceLines = @(Get-Content -LiteralPath $sourceAgents)
+        $merged = (@($ownLines) + @('', $marker) + $sourceLines + @('')) -join "`r`n"
         [IO.File]::WriteAllText($targetAgents, $merged, (New-Object Text.UTF8Encoding($false)))
-        Write-Host "AGENTS.md: appended $sourceAgents"
+        Write-Host "AGENTS.md: $action $sourceAgents"
         $agentsChanges++
     }
 }

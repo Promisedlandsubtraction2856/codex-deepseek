@@ -6,7 +6,9 @@
 #
 #   * AGENTS.md  - the source is appended under a marker that records a hash of
 #                  its content, so a second run is a no-op. The target's own
-#                  rules stay where they are, at the top of the file.
+#                  rules stay where they are, at the top of the file. If an
+#                  earlier run imported an older revision, that block is
+#                  replaced rather than stacked.
 #   * skills/*   - copied file by file, overwriting same-named files, leaving
 #                  any skill that only exists in the target alone.
 #   * skills/.system - skipped: each home gets its own copy from the Codex
@@ -101,22 +103,49 @@ else
 
     if [ -n "$digest" ] && [ -f "$target_agents" ] && grep -Fq "$marker" "$target_agents"; then
         printf 'AGENTS.md: already merged (%s), nothing to do\n' "sha256:${digest:0:12}"
-    elif [ "$dry_run" -eq 1 ]; then
-        printf 'AGENTS.md: would append %s\n' "$source_agents"
-        agents_changes=$((agents_changes + 1))
     else
+        # An earlier run may have imported a different revision of the same
+        # file. Its block is identified by the marker, so refreshing replaces
+        # it instead of stacking a second copy; anything above the marker is
+        # your own content and is preserved.
+        imported_line=''
         if [ -f "$target_agents" ]; then
-            backup="${target_agents}.bak-$(date +%Y%m%d-%H%M%S)"
-            cp -f "$target_agents" "$backup"
-            printf 'AGENTS.md: backup %s\n' "$backup"
+            imported_line=$(grep -n -m1 -E '^<!-- merged from .*AGENTS\.md \(sha256:' "$target_agents" | cut -d: -f1 || true)
         fi
-        {
-            printf '\n%s\n' "$marker"
-            cat "$source_agents"
-            printf '\n'
-        } >>"$target_agents"
-        printf 'AGENTS.md: appended %s\n' "$source_agents"
-        agents_changes=$((agents_changes + 1))
+        if [ -n "$imported_line" ]; then
+            action='refresh'
+        else
+            action='append'
+        fi
+
+        if [ "$dry_run" -eq 1 ]; then
+            printf 'AGENTS.md: would %s with the content of %s\n' "$action" "$source_agents"
+            agents_changes=$((agents_changes + 1))
+        else
+            if [ -f "$target_agents" ]; then
+                backup="${target_agents}.bak-$(date +%Y%m%d-%H%M%S)"
+                cp -f "$target_agents" "$backup"
+                printf 'AGENTS.md: backup %s\n' "$backup"
+            fi
+
+            merged_tmp="${target_agents}.merged.tmp"
+            if [ -z "$imported_line" ] && [ -f "$target_agents" ]; then
+                cp -f "$target_agents" "$merged_tmp"
+            elif [ -n "$imported_line" ] && [ "$imported_line" -gt 1 ]; then
+                head -n $((imported_line - 1)) "$target_agents" >"$merged_tmp"
+            else
+                : >"$merged_tmp"
+            fi
+
+            {
+                printf '\n%s\n' "$marker"
+                cat "$source_agents"
+                printf '\n'
+            } >>"$merged_tmp"
+            mv -f "$merged_tmp" "$target_agents"
+            printf 'AGENTS.md: %s %s\n' "$action" "$source_agents"
+            agents_changes=$((agents_changes + 1))
+        fi
     fi
 fi
 

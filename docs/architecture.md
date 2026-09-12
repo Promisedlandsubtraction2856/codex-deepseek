@@ -108,12 +108,14 @@ never changes the other. The one exception is anything that lives outside the
 home — a project's own `AGENTS.md`, for example, is read by both CLIs because it
 is part of the working tree.
 
-`tools/sync-from-native.ps1` and `tools/sync-from-native.sh` copy *into* the
-DeepSeek home on request, with merge semantics: nothing is deleted, the target's
-own `AGENTS.md` stays at the top of the file, same-named skill files are
+`tools/sync-from-native.ps1` and `tools/sync-from-native.sh` copy between the
+homes on request, with merge semantics: nothing is deleted, the target's own
+`AGENTS.md` stays at the top of the file, same-named skill files are
 overwritten, target-only skills survive, and `skills/.system` is left to the CLI.
-`-Also`/`--also` covers skills that live outside `skills/` (automations, for
-instance). The native home is never written to.
+The imported `AGENTS.md` block is delimited by a marker carrying a content hash,
+so re-running after the source changes refreshes that block instead of stacking
+a second copy. `-Also`/`--also` covers skills that live outside `skills/`
+(automations, for instance). The source home is never written to.
 
 ## File map
 

@@ -228,7 +228,7 @@ bash tools/sync-from-native.sh --also ~/.codex/automations/chronicle-workflow-sk
 
 这里的「merge」具体指：
 
-- **`AGENTS.md`** —— 把原生那份**追加**到目标文件末尾，并带一行记录内容哈希的标记；目标自己的规则保持在最前面，重复执行不会重复追加。原生文件为空时则什么都不做。
+- **`AGENTS.md`** —— 把源文件导入到目标末尾，并带一行记录内容哈希的标记；目标自己的规则保持在最前面，重复执行不会重复导入。若你改了源文件再跑一次，那块内容会被**原地刷新**而不是叠加，标记上方属于你自己的内容原样保留。源文件为空时什么都不做。
 - **`skills/`** —— 逐文件合并：同名文件被覆盖，只存在于 DeepSeek home 的 skill 保持不动；空目录默认跳过（`-IncludeEmpty` / `--include-empty` 可强制复制），`skills/.system` 也跳过，因为它是每个 home 由 Codex 二进制各自生成的。
 - **`-Also` / `--also`** —— 用于不在 `skills/` 下的 skill（例如放在 automations 里）。该目录下每个含 `SKILL.md` 的直接子目录都会被合并。
 

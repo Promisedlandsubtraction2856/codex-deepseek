@@ -104,6 +104,23 @@ bash "$sync" --from "$native" --to "$deep" --also "${work_dir}/nope" >"${work_di
 check "an --also path that does not exist is skipped, not fatal" \
     grep -Fq 'not found, skipped' "${work_dir}/run6.log"
 
+# Editing the source and re-running must refresh the imported block in place
+# rather than stacking a second copy of the rules.
+printf '# native rules v2\n- always verify twice\n' >"${native}/AGENTS.md"
+bash "$sync" --from "$native" --to "$deep" >"${work_dir}/run7.log" 2>&1
+check "reports a refresh when the source changed" grep -Fq 'refresh' "${work_dir}/run7.log"
+check "brings the new revision across" grep -Fqx -- '- always verify twice' "${deep}/AGENTS.md"
+check "drops the superseded revision" \
+    bash -c "! grep -Fqx -- '- always verify' '${deep}/AGENTS.md'"
+markers=$(grep -c '^<!-- merged from ' "${deep}/AGENTS.md")
+if [ "$markers" = "1" ]; then
+    printf 'ok   keeps exactly one imported block\n'
+else
+    fail "found ${markers} imported blocks after a refresh"
+fi
+check "still keeps the target's own rules first" \
+    bash -c "[ \"\$(head -n 1 '${deep}/AGENTS.md')\" = '# deepseek rules' ]"
+
 printf '\n'
 if [ "$failures" -eq 0 ]; then
     printf 'all posix sync tests passed\n'
