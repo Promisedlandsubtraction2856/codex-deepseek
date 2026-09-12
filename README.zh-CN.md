@@ -236,4 +236,4 @@ multica --workspace-id <workspace-id> agent update <agent-id> `
 
 ## 许可
 
-[MIT](LICENSE)。与 OpenAI、DeepSeek、Multica 均无隶属关系；Codex 是 OpenAI 的商标。
+[MIT](LICENSE)。与 OpenAI、DeepSeek 均无隶属关系；Codex 是 OpenAI 的商标。
