@@ -41,6 +41,8 @@ CLI 确实能跑了，但桌面版跟着一起变：模型选择器里没有原�
 ~\.codex\switcher-backups\config-20260911-031834-682.toml
 ```
 
+> 2026-09-12 清理：`~\.codex\switcher-backups\` 与 `~\.codex\backup-deepseek\` 已删除。这两个目录里的 `config.toml` 都是明文 API key 的副本，而这条「切换器」路线已经废弃，留着只有泄漏风险。`~\.codex\desktop-deepseek-switch.json` 不含密钥，暂时保留。
+
 **结论：这条路不可取。** 桌面版和 CLI 读同一份配置，任何「切换」都是全局副作用：切一次要重启桌面版，还可能被要求重新登录，而且一旦忘记切回来，CLI 的报错信息（`... not supported when using Codex with a ChatGPT account`）和桌面版的登录状态互相干扰，排查成本极高。
 
 ## 阶段 2：拆分 Codex home
