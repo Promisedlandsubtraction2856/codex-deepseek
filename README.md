@@ -1,6 +1,6 @@
 # codex-deepseek
 
-**Run the real OpenAI Codex CLI on DeepSeek models — while ChatGPT Desktop keeps its own login, its own models and its own config.**
+**Run the real OpenAI Codex CLI on DeepSeek models — while ChatGPT Desktop *and* the plain `codex` command keep their own ChatGPT login, models and config, completely untouched.**
 
 [![build](https://github.com/mlangTse/codex-deepseek/actions/workflows/build.yml/badge.svg)](https://github.com/mlangTse/codex-deepseek/actions/workflows/build.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -16,35 +16,48 @@
 
 ## The problem this solves
 
-Codex Desktop and the Codex CLI **both read `%USERPROFILE%\.codex\config.toml`**, and both use `%USERPROFILE%\.codex` as their home. The moment you point that file at a third-party provider so the CLI can talk to DeepSeek:
+Codex Desktop and the `codex` command line are two front-ends over **one shared Codex home**. Both read `%USERPROFILE%\.codex\config.toml`, both resolve credentials there, and both keep their sessions there. So the moment you point that single file at a third-party provider:
 
 ```toml
 model = "deepseek-flash"
 model_provider = "deepseek"
 ```
 
-the Desktop app inherits it too. You end up with a Desktop that no longer offers your ChatGPT models, an app that asks to be re-authenticated, or a login screen that never finishes loading — because a ChatGPT subscription cannot serve a `deepseek-*` model, and a DeepSeek key cannot serve `gpt-*`.
+- **ChatGPT Desktop** loses your ChatGPT models, asks to be re-authenticated, or sits on a login screen that never finishes loading.
+- **The plain `codex` CLI** stops using your ChatGPT account and starts hitting the DeepSeek endpoint as well — including the sessions you already have under `~\.codex\sessions`.
 
-Editing one shared file back and forth, and restarting or re-logging-in every time you switch, is the thing everyone tries first. It does not hold up.
+Neither symptom is fixable by retrying: a ChatGPT subscription cannot serve a `deepseek-*` model, and a DeepSeek key cannot serve `gpt-*`. Editing that one shared file back and forth, and restarting or re-logging-in every time you switch, is what everyone tries first. It does not hold up.
 
 **This repo pins the CLI to its own Codex home.** Two isolated worlds, no shared state, no re-login:
 
 ```text
-                    your machine
-                         |
-        +----------------+-----------------+
-        |                                  |
-  ChatGPT Desktop                     Codex CLI
-  + native Codex                      + this repo
-        |                                  |
-  %USERPROFILE%\.codex            %USERPROFILE%\.codex-deepseek
-        |                                  |
-  ChatGPT login / Pro               your DeepSeek API key
-        |                                  |
-  GPT / Codex models                deepseek-flash, deepseek-v4-pro
+                          your machine
+                               |
+               +---------------+----------------+
+               |                                |
+      ChatGPT Desktop                    codex-deepseek
+      + plain `codex` CLI                (this repo)
+               |                                |
+     %USERPROFILE%\.codex          %USERPROFILE%\.codex-deepseek
+               |                                |
+     ChatGPT login / Pro                 DeepSeek API key
+               |                                |
+     GPT / Codex models              deepseek-flash, deepseek-v4-pro
 ```
 
-The launcher `codex-deepseek.exe` is what makes the left column impossible to disturb: it starts the *real* `codex.exe` with `CODEX_HOME` explicitly rewritten to `%USERPROFILE%\.codex-deepseek`, so no global config edit, no PATH juggling and no environment race can leak DeepSeek settings into the Desktop app.
+The launcher `codex-deepseek.exe` is what keeps the left column out of reach: it starts the *real* `codex.exe` with `CODEX_HOME` explicitly rewritten to `%USERPROFILE%\.codex-deepseek`, so no global config edit, no PATH juggling and no environment race can leak DeepSeek settings into ChatGPT Desktop or the `codex` command.
+
+### What stays exactly as it was
+
+| Consumer | Codex home | Credentials | Models |
+|---|---|---|---|
+| ChatGPT Desktop | `%USERPROFILE%\.codex` | ChatGPT login | GPT / Codex |
+| `codex` (the plain CLI) | `%USERPROFILE%\.codex` | ChatGPT login | GPT / Codex |
+| `codex-deepseek` | `%USERPROFILE%\.codex-deepseek` | DeepSeek API key | `deepseek-flash`, `deepseek-v4-pro` |
+
+Nothing in this repo ever writes to `%USERPROFILE%\.codex`. The plain CLI keeps its own config, its own credentials and its own `~\.codex\sessions` history, so `codex`, `codex resume` and `codex exec` behave exactly as before: same ChatGPT account, same models, no re-login and no restart. Only `codex-deepseek` reads the DeepSeek home, and only `codex-deepseek` answers model discovery from the pinned catalog.
+
+The one way to break this is to put a custom `model_provider` back into the *global* `%USERPROFILE%\.codex\config.toml`. That is the shared file, and avoiding it is the whole point — see [Gotchas](#gotchas-in-the-order-you-will-hit-them).
 
 ## What you get
 
@@ -87,7 +100,7 @@ codex-deepseek --version      # -> codex-cli 0.154.0  (the real CLI, not a re-im
 codex-deepseek exec "print the current date"
 ```
 
-Your normal `codex` command is untouched and still uses your ChatGPT login.
+Your plain `codex` command is untouched: same ChatGPT login, same models, same `~\.codex\sessions` history — no re-login, no restart.
 
 ### Manual setup, if you prefer to see every step
 

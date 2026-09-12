@@ -1,6 +1,6 @@
 # codex-deepseek
 
-**让真正的 OpenAI Codex CLI 跑 DeepSeek 模型，同时 ChatGPT 桌面版照旧使用自己的登录、模型和配置。**
+**让真正的 OpenAI Codex CLI 跑 DeepSeek 模型，同时 ChatGPT 桌面版和原来的 `codex` 命令都照旧使用自己的登录、模型和配置，完全不受影响。**
 
 [English](README.md) · [架构说明](docs/architecture.md) · [完整操作记录](docs/setup-log.zh-CN.md)
 
@@ -12,33 +12,48 @@
 
 ## 解决什么问题
 
-Codex 桌面版和 Codex CLI **读的是同一份 `%USERPROFILE%\.codex\config.toml`**，也用同一个 home 目录。一旦你为了让 CLI 使用 DeepSeek 而写入：
+Codex 桌面版和 `codex` 命令行是**同一个 Codex home 的两个前端**：都读 `%USERPROFILE%\.codex\config.toml`，都在那里找凭据，也都把会话存在那里。所以一旦你把这份共享配置指向第三方 provider：
 
 ```toml
 model = "deepseek-flash"
 model_provider = "deepseek"
 ```
 
-桌面版就会跟着变：模型选择器里没有 ChatGPT 模型了、要求重新登录，或者登录界面一直转圈加载 —— 因为 ChatGPT 订阅不能服务 `deepseek-*` 模型，DeepSeek 的 key 也不能服务 `gpt-*`。
+两个前端会一起变：
 
-于是就有了「同一份文件来回改、改完还要重启/重新登录」的循环。这个仓库终结这个循环：
+- **ChatGPT 桌面版**：模型选择器里没有 ChatGPT 模型了、要求重新登录，或者登录界面一直转圈加载。
+- **原来的 `codex` CLI**：不再走你的 ChatGPT 账号，同样去打 DeepSeek 端点 —— 连 `~\.codex\sessions` 里已有的会话也一起受影响。
+
+两边都不是「重试一下」能解决的：ChatGPT 订阅不能服务 `deepseek-*` 模型，DeepSeek 的 key 也不能服务 `gpt-*`。于是就有了「同一份文件来回改、改完还要重启/重新登录」的循环 —— 这个仓库终结这个循环：
 
 ```text
-                     你的电脑
-                         |
-        +----------------+-----------------+
-        |                                  |
-   ChatGPT 桌面版                     Codex CLI
-   + 原生 Codex                       + 本仓库
-        |                                  |
-  %USERPROFILE%\.codex            %USERPROFILE%\.codex-deepseek
-        |                                  |
-  ChatGPT 登录 / Pro                你自己的 DeepSeek API Key
-        |                                  |
-  GPT / Codex 模型                  deepseek-flash, deepseek-v4-pro
+                        你的电脑
+                            |
+             +--------------+---------------+
+             |                              |
+     ChatGPT 桌面版                   codex-deepseek
+     + 原来的 `codex` CLI             （本仓库）
+             |                              |
+   %USERPROFILE%\.codex        %USERPROFILE%\.codex-deepseek
+             |                              |
+   ChatGPT 登录 / Pro               你自己的 DeepSeek API Key
+             |                              |
+   GPT / Codex 模型               deepseek-flash, deepseek-v4-pro
 ```
 
-关键是 `codex-deepseek.exe` 这个启动器：它用显式重写过的 `CODEX_HOME` 去启动**真正的** `codex.exe`，所以无论全局配置怎么写、PATH 怎么排、环境变量怎么传，DeepSeek 的设置都不可能漏进桌面版。
+关键是 `codex-deepseek.exe` 这个启动器：它用显式重写过的 `CODEX_HOME` 去启动**真正的** `codex.exe`，所以无论全局配置怎么写、PATH 怎么排、环境变量怎么传，DeepSeek 的设置都不可能漏进 ChatGPT 桌面版，也不可能漏进原来的 `codex` 命令。
+
+### 哪些东西完全没被动过
+
+| 使用者 | Codex home | 凭据 | 模型 |
+|---|---|---|---|
+| ChatGPT 桌面版 | `%USERPROFILE%\.codex` | ChatGPT 登录 | GPT / Codex |
+| `codex`（原来的 CLI） | `%USERPROFILE%\.codex` | ChatGPT 登录 | GPT / Codex |
+| `codex-deepseek` | `%USERPROFILE%\.codex-deepseek` | DeepSeek API Key | `deepseek-flash`、`deepseek-v4-pro` |
+
+本仓库从不写 `%USERPROFILE%\.codex`。原来的 CLI 保留自己的配置、自己的凭据、自己的 `~\.codex\sessions` 历史，所以 `codex`、`codex resume`、`codex exec` 的行为和以前完全一样：同一个 ChatGPT 账号、同一批模型，不用重新登录、不用重启。只有 `codex-deepseek` 会读 DeepSeek 的 home，也只有它会用固定目录回答模型发现请求。
+
+唯一会破坏这个隔离的做法，是把自定义 `model_provider` 写回**全局** `%USERPROFILE%\.codex\config.toml` —— 那正是这个仓库要避开的东西，参见[常见故障对照表](#常见故障对照表)。
 
 ## 仓库内容
 
@@ -81,7 +96,7 @@ codex-deepseek --version      # -> codex-cli 0.154.0（真 CLI，不是重写的
 codex-deepseek exec "打印当前日期"
 ```
 
-原来的 `codex` 命令完全不受影响，继续用你的 ChatGPT 登录。
+原来的 `codex` 命令完全不受影响：同一个 ChatGPT 账号、同一批模型、同一份 `~\.codex\sessions` 历史，不用重新登录也不用重启。
 
 ### 手动安装（想逐步确认时）
 
