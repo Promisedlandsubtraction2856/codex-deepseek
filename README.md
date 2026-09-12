@@ -2,7 +2,6 @@
 
 **Run the real OpenAI Codex CLI on DeepSeek models — while ChatGPT Desktop *and* the plain `codex` command keep their own ChatGPT login, models and config, completely untouched.**
 
-[![build](https://github.com/mlangTse/codex-deepseek/actions/workflows/build.yml/badge.svg)](https://github.com/mlangTse/codex-deepseek/actions/workflows/build.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![platforms: Windows | macOS | Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078d4.svg)](#requirements)
 

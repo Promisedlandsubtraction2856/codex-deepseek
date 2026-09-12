@@ -110,5 +110,5 @@ install.ps1                 Windows: build + create home + write config + PATH
 install.sh                  macOS / Linux: install launcher + create home + write config + PATH
 config/config.toml.example  provider template (filled in by both installers)
 config/models.json          pinned model catalog, referenced by model_catalog_json
-tests/                      launcher and installer tests, run by CI on all three platforms
+tests/                      launcher and installer tests; no Codex install or network needed
 ```
