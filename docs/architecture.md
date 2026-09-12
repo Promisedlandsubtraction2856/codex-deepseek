@@ -100,6 +100,21 @@ exports the variable at user scope so a home on another drive keeps working.
   environment block and an argument vector to the real CLI.
 - Nothing in this repo talks to the network on its own.
 
+## Skills, AGENTS.md and the two homes
+
+Skills, `AGENTS.md`, memories, rules, plugins and sessions all resolve relative
+to `CODEX_HOME`, so the two homes are independent in both directions: editing one
+never changes the other. The one exception is anything that lives outside the
+home — a project's own `AGENTS.md`, for example, is read by both CLIs because it
+is part of the working tree.
+
+`tools/sync-from-native.ps1` and `tools/sync-from-native.sh` copy *into* the
+DeepSeek home on request, with merge semantics: nothing is deleted, the target's
+own `AGENTS.md` stays at the top of the file, same-named skill files are
+overwritten, target-only skills survive, and `skills/.system` is left to the CLI.
+`-Also`/`--also` covers skills that live outside `skills/` (automations, for
+instance). The native home is never written to.
+
 ## File map
 
 ```text
@@ -110,5 +125,6 @@ install.ps1                 Windows: build + create home + write config + PATH
 install.sh                  macOS / Linux: install launcher + create home + write config + PATH
 config/config.toml.example  provider template (filled in by both installers)
 config/models.json          pinned model catalog, referenced by model_catalog_json
-tests/                      launcher and installer tests; no Codex install or network needed
+tools/sync-from-native.*    one-way merge of AGENTS.md and skills into the DeepSeek home
+tests/                      launcher, installer and sync tests; no Codex install or network needed
 ```

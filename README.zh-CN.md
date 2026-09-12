@@ -208,6 +208,32 @@ codex                               # 保持原样：ChatGPT 账号
 cx exec "解释一下这个仓库"
 ```
 
+## 两个 home 之间的同步
+
+skill、`AGENTS.md`、memories、plugins、sessions 全都在 `CODEX_HOME` **里面**，所以两个 home 之间**不会自动同步** —— 改任意一边，另一边都不受影响（两个方向都是）。真想把东西搬过去时，`tools/` 里有一个单向 merge 工具，它永不删除任何东西：
+
+```powershell
+# Windows
+pwsh -File .\tools\sync-from-native.ps1 -DryRun
+pwsh -File .\tools\sync-from-native.ps1
+pwsh -File .\tools\sync-from-native.ps1 -Also "$env:USERPROFILE\.codex\automations\chronicle-workflow-skills"
+```
+
+```sh
+# macOS / Linux
+bash tools/sync-from-native.sh --dry-run
+bash tools/sync-from-native.sh
+bash tools/sync-from-native.sh --also ~/.codex/automations/chronicle-workflow-skills
+```
+
+这里的「merge」具体指：
+
+- **`AGENTS.md`** —— 把原生那份**追加**到目标文件末尾，并带一行记录内容哈希的标记；目标自己的规则保持在最前面，重复执行不会重复追加。原生文件为空时则什么都不做。
+- **`skills/`** —— 逐文件合并：同名文件被覆盖，只存在于 DeepSeek home 的 skill 保持不动；空目录默认跳过（`-IncludeEmpty` / `--include-empty` 可强制复制），`skills/.system` 也跳过，因为它是每个 home 由 Codex 二进制各自生成的。
+- **`-Also` / `--also`** —— 用于不在 `skills/` 下的 skill（例如放在 automations 里）。该目录下每个含 `SKILL.md` 的直接子目录都会被合并。
+
+原生 home 永不被写入，每次运行都会打印它到底做了什么。方向是单向的（原生 → DeepSeek）；反过来只需交换 `-From`/`-To`（`--from`/`--to`）。
+
 ## 常见故障对照表
 
 | 现象 | 原因 | 处理 |

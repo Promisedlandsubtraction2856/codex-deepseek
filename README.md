@@ -208,6 +208,32 @@ Both installers also drop a short alias next to the launcher — `cx` (macOS/Lin
 cx exec "explain this repository"
 ```
 
+## Keeping the two homes in sync
+
+Skills, `AGENTS.md`, memories, plugins and sessions all live *under* `CODEX_HOME`, so the two homes never sync on their own — editing one leaves the other untouched, in both directions. When you do want to pull something across, `tools/` has a one-way merge that never deletes anything:
+
+```powershell
+# Windows
+pwsh -File .\tools\sync-from-native.ps1 -DryRun
+pwsh -File .\tools\sync-from-native.ps1
+pwsh -File .\tools\sync-from-native.ps1 -Also "$env:USERPROFILE\.codex\automations\chronicle-workflow-skills"
+```
+
+```sh
+# macOS / Linux
+bash tools/sync-from-native.sh --dry-run
+bash tools/sync-from-native.sh
+bash tools/sync-from-native.sh --also ~/.codex/automations/chronicle-workflow-skills
+```
+
+What "merge" means here:
+
+- **`AGENTS.md`** — the native file is appended under a marker that records a hash of its content, so the target's own rules stay at the top and a second run is a no-op. An empty native file means nothing happens.
+- **`skills/`** — merged file by file. Same-named files are overwritten; a skill that only exists in the DeepSeek home is left alone. Empty folders are skipped (`-IncludeEmpty` / `--include-empty` copies them anyway), and `skills/.system` is skipped because each home gets its own copy from the Codex binary.
+- **`-Also` / `--also`** — for skills kept outside `skills/`, such as automations. Every direct subdirectory that contains a `SKILL.md` is merged.
+
+The native home is never written to, and every run prints exactly what it did. It is one-way (native → DeepSeek); to go the other way, swap `-From`/`-To` (`--from`/`--to`).
+
 ## Gotchas, in the order you will hit them
 
 | Symptom | Cause | Fix |
